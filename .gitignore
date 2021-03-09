@@ -12,3 +12,4 @@ coverage
 __diff_output__
 videos
 screenshots
+stories/cypress/snapshots/difs

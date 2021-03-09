@@ -1,8 +1,8 @@
 version: 2
 jobs:
-  build:
+  test:
     docker:
-      - image: circleci/node:lts
+      - image: cypress/base:10
     working_directory: ~/repo
     steps:
       - checkout
@@ -21,8 +21,6 @@ jobs:
       - run: yarn --cwd stories test
       - store_artifacts:
           path: giraffe/coverage
-      - store_artifacts:
-          path: stories/cypress/snapshots/**/__diff_output__
       # See: https://github.com/influxdata/giraffe/issues/129
       # - run:
       #     name: chromatic
@@ -35,3 +33,50 @@ jobs:
       #       else \
       #         yarn run chromatic -- --auto-accept-changes
       #       fi
+  gen-diff:
+    docker:
+      - image: cypress/base:10
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "yarn.lock" }}
+      - run: yarn install --frozen-lockfile
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "yarn.lock" }}
+      - run: yarn --cwd stories run-p -r start:ci 'wait:ci cy:gen-diff'
+      - run:
+          name: prepare artifacts
+          when: always
+          command: yarn --cwd stories cy:cpy-diff
+      - store_artifacts:
+          path: stories/cypress/snapshots/difs
+  update-snapshots:
+    docker:
+      - image: cypress/base:10
+    working_directory: ~/repo
+    steps:
+      - checkout
+      - restore_cache:
+          keys:
+            - v1-dependencies-{{ checksum "yarn.lock" }}
+      - run: yarn install --frozen-lockfile
+      - save_cache:
+          paths:
+            - node_modules
+          key: v1-dependencies-{{ checksum "yarn.lock" }}
+      - run: yarn --cwd stories run-p -r start:ci 'wait:ci cy:update'
+
+workflows:
+  version: 2
+  test:
+    jobs:
+      - test
+      - gen-diff
+      - update-snapshots:
+          type: approval
+          requires:
+            - gen-diff

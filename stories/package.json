@@ -12,14 +12,17 @@
     "prettier": "prettier --config ../.prettierrc.json --check \"{,../giraffe}/{src,cypress}/**/*.{ts,tsx}\"",
     "prettier:fix": "prettier --config ../.prettierrc.json --write \"{,../giraffe}/{src,cypress}/**/*.{ts,tsx}\"",
     "start": "yarn -s run prettier:fix && yarn -s run storybook",
-    "start:ci": "yarn storybook --ci",
+    "start:ci": "yarn storybook --ci --quiet",
+    "build": "build-storybook -o dist",
     "storybook": "start-storybook -p 50000",
     "publish": "storybook-to-ghpages --out=.out",
     "chromatic": "chromatic test",
+    "wait:ci": "wait-on http://localhost:50000/ && yarn",
     "cy": "cypress open --env failOnSnapshotDiff=false",
-    "cy:ci": "wait-on http://localhost:50000/ && cypress run",
+    "cy:ci": "yarn wait:ci cypress run",
     "cy:update": "cypress run --env updateSnapshots=true",
-    "cy:gen-diff": "cypress run --env failOnSnapshotDiff=false"
+    "cy:gen-diff": "cypress run --env failOnSnapshotDiff=false && yarn cy:cpy-diff",
+    "cy:cpy-diff": "cpy --cwd=./cypress/snapshots/ --parents **/__diff_output__/* ./difs/"
   },
   "devDependencies": {
     "@babel/core": "^7.4.3",
@@ -36,6 +39,7 @@
     "@typescript-eslint/eslint-plugin": "^1.5.0",
     "@typescript-eslint/parser": "^1.5.0",
     "babel-loader": "^8.0.5",
+    "cpy-cli": "^3.1.1",
     "cross-env": "^7.0.3",
     "css-loader": "^3.6.0",
     "css-modules-typescript-loader": "4.0.0",

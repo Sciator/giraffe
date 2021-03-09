@@ -1,5 +1,5 @@
 describe('testing test', () => {
-  it.only('should fix geo data', () => {
+  it('should fix geo data', () => {
     cy.visitTest('Geo', 'Circle Markers')
     cy.inputKnobs('Fixed data', true, 'boolean')
   })
